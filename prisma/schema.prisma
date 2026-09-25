@@ -23,6 +23,7 @@ model Client {
   id        String    @id @default(uuid())
   name      String
   users     User[]
+  projects  Project[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -35,6 +36,7 @@ model User {
   name         String
   avatarUrl    String?
   role         Role
+  memberships  ProjectMember[]
   department   Department?
   clientId     String?
   client       Client?     @relation(fields: [clientId], references: [id])
@@ -45,4 +47,31 @@ model User {
 
   @@index([clientId])
   @@index([role, department])
+}
+
+model Project {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  clientId    String
+  client      Client          @relation(fields: [clientId], references: [id])
+  members     ProjectMember[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  @@index([clientId])
+}
+
+model ProjectMember {
+  id        String    @id @default(uuid())
+  projectId String
+  userId    String
+  project   Project   @relation(fields: [projectId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@unique([projectId, userId])
+  @@index([userId])
 }
