@@ -3,6 +3,11 @@ import type { Department, Prisma } from "../../generated/prisma/client";
 import { AppError } from "../../lib/errors";
 import { parseListQuery, toPaginated } from "../../lib/query";
 import type { AuthUser } from "../auth/auth.select";
+import {
+	dependentIdsOf,
+	pendingPrerequisitesOf,
+	recomputeBlocked,
+} from "./task.blocking";
 import { taskListSpec, taskScope } from "./task.policy";
 import type {
 	ChangeStatusInput,
@@ -10,7 +15,6 @@ import type {
 	UpdateTaskInput,
 } from "./task.schema";
 import { taskClientSelect, taskInternalSelect } from "./task.select";
-import { dependentIdsOf, pendingPrerequisitesOf, recomputeBlocked } from "./task.blocking";
 import { canTransition, listTransitions } from "./task.transitions";
 
 type Db = Prisma.TransactionClient;
@@ -138,7 +142,7 @@ export async function getTask(user: AuthUser, id: string) {
 	const pendingPrerequisites = await pendingPrerequisitesOf(prisma, id);
 	return {
 		...task,
-        blockedBy: pendingPrerequisites,
+		blockedBy: pendingPrerequisites,
 		availableTransitions: listTransitions(user, task, { pendingPrerequisites }),
 	};
 }
@@ -211,7 +215,7 @@ export async function changeTaskStatus(
 	input: ChangeStatusInput,
 ) {
 	return prisma.$transaction(async (tx) => {
-        const pendingPrerequisites = await pendingPrerequisitesOf(tx, id);
+		const pendingPrerequisites = await pendingPrerequisitesOf(tx, id);
 
 		const task = await tx.task.findFirst({
 			where: scopedWhere(user, { id }),
@@ -238,11 +242,7 @@ export async function changeTaskStatus(
 			user,
 		);
 
-		await recomputeBlocked(
-            tx, 
-            await dependentIdsOf(tx, id), 
-            user
-        );
+		await recomputeBlocked(tx, await dependentIdsOf(tx, id), user);
 
 		return tx.task.findFirstOrThrow({
 			where: { id },

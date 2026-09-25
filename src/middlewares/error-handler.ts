@@ -46,18 +46,21 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
 		);
 	}
 
-    if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === "P2034"
-    ) {
-        return c.json(
-            {
-                success: false,
-                error: { code: "CONCURRENT_UPDATE", message: "Data has been modified by another user" },
-            },
-            409,
-        );
-    }
+	if (
+		err instanceof Prisma.PrismaClientKnownRequestError &&
+		err.code === "P2034"
+	) {
+		return c.json(
+			{
+				success: false,
+				error: {
+					code: "CONCURRENT_UPDATE",
+					message: "Data has been modified by another user",
+				},
+			},
+			409,
+		);
+	}
 
 	if (err instanceof HTTPException) {
 		return err.getResponse();
