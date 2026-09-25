@@ -95,6 +95,8 @@ model Task {
   department    Department
   status        TaskStatus @default(TODO)
   assigneeId    String?
+  prerequisites TaskDependency[] @relation("TaskPrerequisites")
+  dependents    TaskDependency[] @relation("TaskDependents")
   assignee      User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
   createdById   String
   createdBy     User       @relation("TaskCreator", fields: [createdById], references: [id])
@@ -106,4 +108,17 @@ model Task {
 
   @@index([projectId, status])
   @@index([assigneeId])
+}
+
+model TaskDependency {
+  id          String    @id @default(uuid())
+  taskId      String    // task yang menunggu
+  dependsOnId String    // prerequisite
+  task        Task      @relation("TaskPrerequisites", fields: [taskId], references: [id])
+  dependsOn   Task      @relation("TaskDependents", fields: [dependsOnId], references: [id])
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  @@unique([taskId, dependsOnId])
+  @@index([dependsOnId])
 }
