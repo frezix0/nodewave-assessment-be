@@ -1,6 +1,7 @@
 import type { Prisma } from "../../generated/prisma/client";
 import type { AuthUser } from "../auth/auth.select";
 import type { PendingPrerequisite } from "./task.transitions";
+import { writeAudit } from "../audit/audit.writer";
 
 type Db = Prisma.TransactionClient;
 
@@ -40,7 +41,7 @@ export async function dependentIdsOf(
 export async function recomputeBlocked(
 	db: Db,
 	taskIds: string[],
-	_actor: AuthUser,
+	actor: AuthUser,
 ): Promise<void> {
 	if (taskIds.length === 0) return;
 
@@ -52,6 +53,7 @@ export async function recomputeBlocked(
 		},
 		select: {
 			id: true,
+			projectId: true,
 			status: true,
 			prerequisites: {
 				where: {
@@ -71,6 +73,17 @@ export async function recomputeBlocked(
 			where: { id: task.id },
 			data: { status: target, version: { increment: 1 } },
 		});
-		// aufit log
+		// audit log
+		await writeAudit(
+			db,
+			{ taskId: task.id, projectId: task.projectId, userId: actor.id },
+			[
+				{
+					changedColumn: "status",
+					oldValue: task.status,
+					newValue: target,
+				},
+			]
+		);
 	}
 }
