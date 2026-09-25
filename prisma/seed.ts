@@ -61,6 +61,7 @@ async function main() {
 
 	const passwordHash = await Bun.password.hash(SEED_PASSWORD);
 
+	const userIds = new Map<string, string>();
 	for (const u of USERS) {
 		const data = {
 			name: u.name,
@@ -70,20 +71,60 @@ async function main() {
 			passwordHash,
 			deletedAt: null,
 		};
-		await prisma.user.upsert({
+		const user = await prisma.user.upsert({
 			where: { email: u.email },
 			update: data,
 			create: { email: u.email, ...data },
 		});
+		userIds.set(u.email, user.id);
 	}
 
 	console.log(`Seeding Status: ${CLIENTS.length} client, ${USERS.length} user`);
-}
 
-main()
-	.then(() => prisma.$disconnect())
-	.catch(async (err) => {
-		console.error(err);
-		await prisma.$disconnect();
-		process.exit(1);
-	});
+	const PROJECTS = [
+		{
+			id: "10000000-0000-4000-8000-000000000001",
+			name: "Website Redesign Maju Jaya",
+			clientId: CLIENTS[0].id,
+			members: [
+				"uiux@nodewave.test",
+				"frontend@nodewave.test",
+				"backend@nodewave.test",
+			],
+		},
+		{
+			id: "10000000-0000-4000-8000-000000000002",
+			name: "Mobile App Development Sentosa",
+			clientId: CLIENTS[1].id,
+			members: ["uiux@nodewave.test"],
+		},
+	];
+
+	for (const { members, ...p } of PROJECTS) {
+		await prisma.project.upsert({
+			where: { id: p.id },
+			update: { name: p.name, clientId: p.clientId, deletedAt: null },
+			create: p,
+		});
+
+		for (const email of members) {
+			const userId = userIds.get(email);
+			if (!userId) {
+				throw new Error(`User with email ${email} not found`);
+			}
+			await prisma.projectMember.upsert({
+				where: { projectId_userId: { projectId: p.id, userId } },
+				update: { deletedAt: null },
+				create: { projectId: p.id, userId },
+			});
+		}
+	}
+
+	main()
+		.then(() => prisma.$disconnect())
+		.catch(async (err) => {
+			console.error(err);
+			await prisma.$disconnect();
+			process.exit(1);
+		});
+}
