@@ -1,10 +1,10 @@
 import { prisma } from "../../db/prisma";
 import type { Prisma } from "../../generated/prisma/client";
 import { AppError } from "../../lib/errors";
+import { writeAudit } from "../audit/audit.writer";
 import type { AuthUser } from "../auth/auth.select";
 import { recomputeBlocked } from "../tasks/task.blocking";
 import { taskScope } from "../tasks/task.policy";
-import { writeAudit } from "../audit/audit.writer";
 
 type Db = Prisma.TransactionClient;
 
@@ -85,13 +85,13 @@ export async function addDependency(
 	}
 
 	return prisma.$transaction(async (tx) => {
-    const existing = await tx.taskDependency.findUnique({
-      where: { taskId_dependsOnId: { taskId, dependsOnId } },
-      select: { deletedAt: true },
-    });
-    if (existing && existing.deletedAt === null) {
-      throw new AppError(422, "DEPENDENCY_EXISTS", "Dependency already exists");
-    }
+		const existing = await tx.taskDependency.findUnique({
+			where: { taskId_dependsOnId: { taskId, dependsOnId } },
+			select: { deletedAt: true },
+		});
+		if (existing && existing.deletedAt === null) {
+			throw new AppError(422, "DEPENDENCY_EXISTS", "Dependency already exists");
+		}
 
 		const [task, prerequisite] = await Promise.all([
 			tx.task.findFirst({
@@ -141,13 +141,12 @@ export async function addDependency(
 			update: { deletedAt: null },
 			create: { taskId, dependsOnId },
 		});
-		
-    await writeAudit(
-      tx, 
-      { taskId: taskId, projectId: task.projectId, userId: user.id }, [
-        {changedColumn: "dependency", oldValue: null, newValue: dependsOnId },
-      ]
-    );
+
+		await writeAudit(
+			tx,
+			{ taskId: taskId, projectId: task.projectId, userId: user.id },
+			[{ changedColumn: "dependency", oldValue: null, newValue: dependsOnId }],
+		);
 
 		await recomputeBlocked(tx, [taskId], user);
 		return listDependenciesTx(tx, taskId);
@@ -174,13 +173,12 @@ export async function removeDependency(
 		});
 		if (res.count === 0)
 			throw new AppError(404, "NOT_FOUND", "Dependency not found");
-		
-    await writeAudit(
-      tx, 
-      { taskId: taskId, projectId: task.projectId, userId: user.id }, [
-        {changedColumn: "dependency", oldValue: dependsOnId, newValue: null },
-      ]
-    );
+
+		await writeAudit(
+			tx,
+			{ taskId: taskId, projectId: task.projectId, userId: user.id },
+			[{ changedColumn: "dependency", oldValue: dependsOnId, newValue: null }],
+		);
 
 		await recomputeBlocked(tx, [taskId], user);
 		return listDependenciesTx(tx, taskId);

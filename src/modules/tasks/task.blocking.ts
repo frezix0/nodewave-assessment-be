@@ -1,7 +1,7 @@
 import type { Prisma } from "../../generated/prisma/client";
+import { writeAudit } from "../audit/audit.writer";
 import type { AuthUser } from "../auth/auth.select";
 import type { PendingPrerequisite } from "./task.transitions";
-import { writeAudit } from "../audit/audit.writer";
 
 type Db = Prisma.TransactionClient;
 
@@ -83,7 +83,7 @@ export async function recomputeBlocked(
 					oldValue: task.status,
 					newValue: target,
 				},
-			]
+			],
 		);
 	}
 }

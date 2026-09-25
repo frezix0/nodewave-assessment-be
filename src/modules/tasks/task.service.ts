@@ -2,6 +2,8 @@ import { prisma } from "../../db/prisma";
 import type { Department, Prisma } from "../../generated/prisma/client";
 import { AppError } from "../../lib/errors";
 import { parseListQuery, toPaginated } from "../../lib/query";
+import { diffTaskChanges } from "../audit/audit.diff";
+import { auditSnapshotSelect, writeAudit } from "../audit/audit.writer";
 import type { AuthUser } from "../auth/auth.select";
 import {
 	dependentIdsOf,
@@ -16,8 +18,6 @@ import type {
 } from "./task.schema";
 import { taskClientSelect, taskInternalSelect } from "./task.select";
 import { canTransition, listTransitions } from "./task.transitions";
-import { diffTaskChanges } from "../audit/audit.diff";
-import { auditSnapshotSelect, writeAudit } from "../audit/audit.writer";
 
 type Db = Prisma.TransactionClient;
 
@@ -45,7 +45,7 @@ export async function updateTaskWithVersion(
 		select: auditSnapshotSelect,
 	});
 	if (!before) throw notFound();
-	
+
 	const res = await tx.task.updateMany({
 		where: { id, version: expectedVersion, deletedAt: null },
 		data: { ...changes, version: { increment: 1 } },
@@ -54,8 +54,8 @@ export async function updateTaskWithVersion(
 	if (res.count > 0) {
 		// Audit log
 		await writeAudit(
-			tx, 
-			{ taskId: id, projectId: before.projectId, userId: actor.id }, 
+			tx,
+			{ taskId: id, projectId: before.projectId, userId: actor.id },
 			diffTaskChanges(before, changes as Record<string, unknown>),
 		);
 		return;
@@ -186,14 +186,14 @@ export async function createTask(user: AuthUser, input: CreateTaskInput) {
 				assigneeId: input.assigneeId ?? null,
 				clientVisible: input.clientVisible,
 				createdById: user.id,
-		},
-		select: taskInternalSelect,
-	});
-	await writeAudit(
-		tx, 
-		{ taskId: task.id, projectId: task.projectId, userId: user.id }, [
-			{changedColumn: "created", oldValue: null, newValue: task.title },
-		]);
+			},
+			select: taskInternalSelect,
+		});
+		await writeAudit(
+			tx,
+			{ taskId: task.id, projectId: task.projectId, userId: user.id },
+			[{ changedColumn: "created", oldValue: null, newValue: task.title }],
+		);
 		return task;
 	});
 }
