@@ -1,9 +1,9 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "types": ["bun"],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "noUncheckedIndexedAccess": true
-  }
+	"compilerOptions": {
+		"strict": true,
+		"types": ["bun"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx",
+		"noUncheckedIndexedAccess": true
+	}
 }
