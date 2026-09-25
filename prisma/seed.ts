@@ -1,5 +1,9 @@
 import { prisma } from "../src/db/prisma";
-import type { Department, Role, TaskStatus } from "../src/generated/prisma/client";
+import type {
+	Department,
+	Role,
+	TaskStatus,
+} from "../src/generated/prisma/client";
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "Password123!";
 
@@ -123,32 +127,76 @@ async function main() {
 		}
 	}
 
-    const pmId = userIds.get("pm@nodewave.test");
-    if (!pmId) throw new Error("Seeding error: PM user not found");
+	const pmId = userIds.get("pm@nodewave.test");
+	if (!pmId) throw new Error("Seeding error: PM user not found");
 
-    const TASKS: {
-        id: string; projectId: string; title: string; department: Department;
-        assignee: string | null; status: TaskStatus; clientVisible: boolean;
-    }[] = [
-        { id: "20000000-0000-4000-8000-000000000001", projectId: PROJECT_1, title: "UI Design halaman dashboard",
-        department: "UI_UX", assignee: "uiux@nodewave.test", status: "DONE", clientVisible: true },
-        { id: "20000000-0000-4000-8000-000000000002", projectId: PROJECT_2, title: "Backend API integrasi dashboard",
-        department: "BACKEND", assignee: "backend@nodewave.test", status: "IN_PROGRESS", clientVisible: true },
-        { id: "20000000-0000-4000-8000-000000000003", projectId: PROJECT_1, title: "Frontend slicing dashboard",
-        department: "FRONTEND", assignee: "frontend@nodewave.test", status: "TODO", clientVisible: false },
-        { id: "20000000-0000-4000-8000-000000000004", projectId: PROJECT_1, title: "Riset kompetitor (internal)",
-        department: "UI_UX", assignee: null, status: "TODO", clientVisible: false },
-        { id: "20000000-0000-4000-8000-000000000005", projectId: PROJECT_2, title: "Wireframe aplikasi mobile",
-        department: "UI_UX", assignee: "uiux@nodewave.test", status: "IN_PROGRESS", clientVisible: true },
-    ];
+	const TASKS: {
+		id: string;
+		projectId: string;
+		title: string;
+		department: Department;
+		assignee: string | null;
+		status: TaskStatus;
+		clientVisible: boolean;
+	}[] = [
+		{
+			id: "20000000-0000-4000-8000-000000000001",
+			projectId: PROJECT_1,
+			title: "UI Design halaman dashboard",
+			department: "UI_UX",
+			assignee: "uiux@nodewave.test",
+			status: "DONE",
+			clientVisible: true,
+		},
+		{
+			id: "20000000-0000-4000-8000-000000000002",
+			projectId: PROJECT_2,
+			title: "Backend API integrasi dashboard",
+			department: "BACKEND",
+			assignee: "backend@nodewave.test",
+			status: "IN_PROGRESS",
+			clientVisible: true,
+		},
+		{
+			id: "20000000-0000-4000-8000-000000000003",
+			projectId: PROJECT_1,
+			title: "Frontend slicing dashboard",
+			department: "FRONTEND",
+			assignee: "frontend@nodewave.test",
+			status: "TODO",
+			clientVisible: false,
+		},
+		{
+			id: "20000000-0000-4000-8000-000000000004",
+			projectId: PROJECT_1,
+			title: "Riset kompetitor (internal)",
+			department: "UI_UX",
+			assignee: null,
+			status: "TODO",
+			clientVisible: false,
+		},
+		{
+			id: "20000000-0000-4000-8000-000000000005",
+			projectId: PROJECT_2,
+			title: "Wireframe aplikasi mobile",
+			department: "UI_UX",
+			assignee: "uiux@nodewave.test",
+			status: "IN_PROGRESS",
+			clientVisible: true,
+		},
+	];
 
-    for (const { assignee, ...t } of TASKS) {
-        await prisma.task.upsert({
-        where: { id: t.id },
-        update: {},
-        create: { ...t, assigneeId: assignee ? (userIds.get(assignee) ?? null) : null, createdById: pmId },
-        });
-    }
+	for (const { assignee, ...t } of TASKS) {
+		await prisma.task.upsert({
+			where: { id: t.id },
+			update: {},
+			create: {
+				...t,
+				assigneeId: assignee ? (userIds.get(assignee) ?? null) : null,
+				createdById: pmId,
+			},
+		});
+	}
 
 	main()
 		.then(() => prisma.$disconnect())
