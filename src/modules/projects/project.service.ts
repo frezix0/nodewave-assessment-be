@@ -75,13 +75,17 @@ export async function getProject(user: AuthUser, id: string) {
 }
 
 export async function getProjectProgress(user: AuthUser, projectId: string) {
-    await assertProjectAccessible(user, projectId);
-    const where = { projectId, deletedAt: null };
-    const [total, done] = await prisma.$transaction([
-        prisma.task.count({ where }),
-        prisma.task.count({ where: { ...where, status: "DONE" } }),
-    ]);
-    return { total, done, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
+	await assertProjectAccessible(user, projectId);
+	const where = { projectId, deletedAt: null };
+	const [total, done] = await prisma.$transaction([
+		prisma.task.count({ where }),
+		prisma.task.count({ where: { ...where, status: "DONE" } }),
+	]);
+	return {
+		total,
+		done,
+		percent: total === 0 ? 0 : Math.round((done / total) * 100),
+	};
 }
 
 export async function createProject(input: CreateProjectInput) {

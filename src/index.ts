@@ -6,8 +6,8 @@ import { errorHandler } from "./middlewares/error-handler";
 import { authRoute } from "./modules/auth/auth.route";
 import { clientRoute } from "./modules/clients/client.route";
 import { projectRoute } from "./modules/projects/project.route";
-import { userRoute } from "./modules/users/user.route";
 import { taskRoute } from "./modules/tasks/task.route";
+import { userRoute } from "./modules/users/user.route";
 import type { AppEnv } from "./types/app";
 
 const app = new Hono<AppEnv>();
