@@ -24,7 +24,13 @@ app.route("/auth", authRoute);
 app.route("/users", userRoute);
 
 app.notFound((c) =>
-	c.json({ success: false, error: { code: "NOT_FOUND", message: "Endpoint not found" } }, 404),
+	c.json(
+		{
+			success: false,
+			error: { code: "NOT_FOUND", message: "Endpoint not found" },
+		},
+		404,
+	),
 );
 app.onError(errorHandler);
 

@@ -3,12 +3,12 @@ import { departmentEnum, userBaseSchema } from "../users/user.schema";
 
 // role & clientId sengaja TIDAK diterima dari body register publik
 export const registerSchema = userBaseSchema.extend({
-    department: departmentEnum,
+	department: departmentEnum,
 });
 
 export const loginSchema = z.object({
-    email: z.email().transform((v) => v.toLowerCase()),
-    password: z.string().min(1),
+	email: z.email().transform((v) => v.toLowerCase()),
+	password: z.string().min(1),
 });
 
 export type RegisterInput = z.output<typeof registerSchema>;
