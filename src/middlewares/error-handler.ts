@@ -22,7 +22,7 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
 				success: false,
 				error: {
 					code: "VALIDATION_ERROR",
-					message: "Input tidak valid",
+					message: "Invalid input",
 					details: err.issues.map((i) => ({
 						path: i.path.join("."),
 						message: i.message,
@@ -40,11 +40,24 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
 		return c.json(
 			{
 				success: false,
-				error: { code: "CONFLICT", message: "Data sudah ada" },
+				error: { code: "CONFLICT", message: "Data already exists" },
 			},
 			409,
 		);
 	}
+
+    if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2034"
+    ) {
+        return c.json(
+            {
+                success: false,
+                error: { code: "CONCURRENT_UPDATE", message: "Data has been modified by another user" },
+            },
+            409,
+        );
+    }
 
 	if (err instanceof HTTPException) {
 		return err.getResponse();
@@ -56,7 +69,7 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
 			success: false,
 			error: {
 				code: "INTERNAL_ERROR",
-				message: "Terjadi kesalahan pada server",
+				message: "An error occurred on the server",
 			},
 		},
 		500,

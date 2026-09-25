@@ -10,11 +10,8 @@ import type {
 	UpdateTaskInput,
 } from "./task.schema";
 import { taskClientSelect, taskInternalSelect } from "./task.select";
-import {
-	canTransition,
-	listTransitions,
-	type PendingPrerequisite,
-} from "./task.transitions";
+import { dependentIdsOf, pendingPrerequisitesOf, recomputeBlocked } from "./task.blocking";
+import { canTransition, listTransitions } from "./task.transitions";
 
 type Db = Prisma.TransactionClient;
 
@@ -93,14 +90,6 @@ async function validateAssignee(
 	}
 }
 
-async function pendingPrerequisitesOf(
-	_tx: Db,
-	_taskId: string,
-): Promise<PendingPrerequisite[]> {
-	// depedencys = await tx.taskDependency.findMany({
-	return [];
-}
-
 export async function listTasks(
 	user: AuthUser,
 	rawQuery: Record<string, string | undefined>,
@@ -149,6 +138,7 @@ export async function getTask(user: AuthUser, id: string) {
 	const pendingPrerequisites = await pendingPrerequisitesOf(prisma, id);
 	return {
 		...task,
+        blockedBy: pendingPrerequisites,
 		availableTransitions: listTransitions(user, task, { pendingPrerequisites }),
 	};
 }
@@ -221,13 +211,14 @@ export async function changeTaskStatus(
 	input: ChangeStatusInput,
 ) {
 	return prisma.$transaction(async (tx) => {
+        const pendingPrerequisites = await pendingPrerequisitesOf(tx, id);
+
 		const task = await tx.task.findFirst({
 			where: scopedWhere(user, { id }),
 			select: { status: true, assigneeId: true },
 		});
 		if (!task) throw notFound();
 
-		const pendingPrerequisites = await pendingPrerequisitesOf(tx, id);
 		const result = canTransition(user, task, input.status, {
 			pendingPrerequisites,
 		});
@@ -246,7 +237,13 @@ export async function changeTaskStatus(
 			{ status: input.status },
 			user,
 		);
-		// recompute blocked status of depedents
+
+		await recomputeBlocked(
+            tx, 
+            await dependentIdsOf(tx, id), 
+            user
+        );
+
 		return tx.task.findFirstOrThrow({
 			where: { id },
 			select: taskInternalSelect,
@@ -267,6 +264,6 @@ export async function deleteTask(
 			{ deletedAt: new Date() },
 			user,
 		);
-		// recompute for dependent tasks that are now unblocked
+		await recomputeBlocked(tx, await dependentIdsOf(tx, id), user);
 	});
 }

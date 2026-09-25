@@ -198,6 +198,18 @@ async function main() {
 		});
 	}
 
+    const DEPENDENCIES = [
+        { taskId: "20000000-0000-4000-8000-000000000003", dependsOnId: "20000000-0000-4000-8000-000000000001" },
+        { taskId: "20000000-0000-4000-8000-000000000003", dependsOnId: "20000000-0000-4000-8000-000000000002" },
+    ];
+    for (const dep of DEPENDENCIES) {
+        await prisma.taskDependency.upsert({
+        where: { taskId_dependsOnId: dep },
+        update: { deletedAt: null },
+        create: dep,
+        });
+    }
+
 	main()
 		.then(() => prisma.$disconnect())
 		.catch(async (err) => {

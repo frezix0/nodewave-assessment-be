@@ -8,6 +8,7 @@ import { clientRoute } from "./modules/clients/client.route";
 import { projectRoute } from "./modules/projects/project.route";
 import { taskRoute } from "./modules/tasks/task.route";
 import { userRoute } from "./modules/users/user.route";
+import { dependencyRoute } from "./modules/dependency/dependency.route";
 import type { AppEnv } from "./types/app";
 
 const app = new Hono<AppEnv>();
@@ -28,6 +29,7 @@ app.route("/users", userRoute);
 app.route("/clients", clientRoute);
 app.route("/projects", projectRoute);
 app.route("/tasks", taskRoute);
+app.route("/tasks", dependencyRoute);
 
 app.notFound((c) =>
 	c.json(
