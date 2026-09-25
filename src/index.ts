@@ -4,6 +4,8 @@ import { logger } from "hono/logger";
 import { env } from "./config/env";
 import { errorHandler } from "./middlewares/error-handler";
 import { authRoute } from "./modules/auth/auth.route";
+import { clientRoute } from "./modules/clients/client.route";
+import { projectRoute } from "./modules/projects/project.route";
 import { userRoute } from "./modules/users/user.route";
 import type { AppEnv } from "./types/app";
 
@@ -22,6 +24,8 @@ app.use(
 app.get("/health", (c) => c.json({ success: true, data: { status: "ok" } }));
 app.route("/auth", authRoute);
 app.route("/users", userRoute);
+app.route("/clients", clientRoute);
+app.route("/projects", projectRoute);
 
 app.notFound((c) =>
 	c.json(
