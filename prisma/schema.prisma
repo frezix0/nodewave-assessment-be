@@ -43,6 +43,7 @@ model User {
   tokenVersion Int         @default(0)
   assignedTasks Task[]     @relation("TaskAssignee")
   createdTasks  Task[]     @relation("TaskCreator")
+  auditLogs     AuditLog[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   deletedAt    DateTime?
@@ -97,6 +98,7 @@ model Task {
   assigneeId    String?
   prerequisites TaskDependency[] @relation("TaskPrerequisites")
   dependents    TaskDependency[] @relation("TaskDependents")
+  auditLogs     AuditLog[]
   assignee      User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
   createdById   String
   createdBy     User       @relation("TaskCreator", fields: [createdById], references: [id])
@@ -121,4 +123,26 @@ model TaskDependency {
 
   @@unique([taskId, dependsOnId])
   @@index([dependsOnId])
+}
+
+enum AuditSource {
+  USER
+  SYSTEM
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  taskId        String
+  task          Task        @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  projectId     String     
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  changedColumn String
+  oldValue      String?
+  newValue      String?
+  source        AuditSource @default(USER)
+  timestamp     DateTime    @default(now())
+
+  @@index([taskId, timestamp])
+  @@index([projectId, timestamp])
 }

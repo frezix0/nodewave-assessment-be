@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { env } from "./config/env";
 import { errorHandler } from "./middlewares/error-handler";
+import { auditRoute, taskAuditRoute } from "./modules/audit/audit.route";
 import { authRoute } from "./modules/auth/auth.route";
 import { clientRoute } from "./modules/clients/client.route";
 import { dependencyRoute } from "./modules/dependency/dependency.route";
@@ -30,6 +31,8 @@ app.route("/clients", clientRoute);
 app.route("/projects", projectRoute);
 app.route("/tasks", taskRoute);
 app.route("/tasks", dependencyRoute);
+app.route("/tasks", taskAuditRoute);
+app.route("/audit-logs", auditRoute);
 
 app.notFound((c) =>
 	c.json(

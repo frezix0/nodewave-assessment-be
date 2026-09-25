@@ -2,6 +2,8 @@ import { prisma } from "../../db/prisma";
 import type { Department, Prisma } from "../../generated/prisma/client";
 import { AppError } from "../../lib/errors";
 import { parseListQuery, toPaginated } from "../../lib/query";
+import { diffTaskChanges } from "../audit/audit.diff";
+import { auditSnapshotSelect, writeAudit } from "../audit/audit.writer";
 import type { AuthUser } from "../auth/auth.select";
 import {
 	dependentIdsOf,
@@ -36,8 +38,14 @@ export async function updateTaskWithVersion(
 	id: string,
 	expectedVersion: number,
 	changes: Prisma.TaskUncheckedUpdateManyInput,
-	_actor: AuthUser,
+	actor: AuthUser,
 ): Promise<void> {
+	const before = await tx.task.findFirst({
+		where: { id, deletedAt: null },
+		select: auditSnapshotSelect,
+	});
+	if (!before) throw notFound();
+
 	const res = await tx.task.updateMany({
 		where: { id, version: expectedVersion, deletedAt: null },
 		data: { ...changes, version: { increment: 1 } },
@@ -45,6 +53,11 @@ export async function updateTaskWithVersion(
 
 	if (res.count > 0) {
 		// Audit log
+		await writeAudit(
+			tx,
+			{ taskId: id, projectId: before.projectId, userId: actor.id },
+			diffTaskChanges(before, changes as Record<string, unknown>),
+		);
 		return;
 	}
 
@@ -163,17 +176,25 @@ export async function createTask(user: AuthUser, input: CreateTaskInput) {
 		);
 	}
 
-	return prisma.task.create({
-		data: {
-			projectId: input.projectId,
-			title: input.title,
-			description: input.description,
-			department: input.department,
-			assigneeId: input.assigneeId ?? null,
-			clientVisible: input.clientVisible,
-			createdById: user.id,
-		},
-		select: taskInternalSelect,
+	return prisma.$transaction(async (tx) => {
+		const task = await tx.task.create({
+			data: {
+				projectId: input.projectId,
+				title: input.title,
+				description: input.description,
+				department: input.department,
+				assigneeId: input.assigneeId ?? null,
+				clientVisible: input.clientVisible,
+				createdById: user.id,
+			},
+			select: taskInternalSelect,
+		});
+		await writeAudit(
+			tx,
+			{ taskId: task.id, projectId: task.projectId, userId: user.id },
+			[{ changedColumn: "created", oldValue: null, newValue: task.title }],
+		);
+		return task;
 	});
 }
 
