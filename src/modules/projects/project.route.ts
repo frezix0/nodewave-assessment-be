@@ -12,6 +12,7 @@ import {
 	createProject,
 	deleteProject,
 	getProject,
+	getProjectProgress,
 	listMembers,
 	listProjects,
 	removeMember,
@@ -36,6 +37,12 @@ export const projectRoute = new Hono<AppEnv>()
 			data: await getProject(c.get("user"), c.req.param("id")),
 		});
 	})
+    .get("/:id/progress", async (c) => {
+        return c.json({
+            success: true,
+            data: await getProjectProgress(c.get("user"), c.req.param("id")),
+        });
+    })
 	.patch("/:id", requireRole("PM"), async (c) => {
 		const input = await parseJsonBody(c, updateProjectSchema);
 		return c.json({
