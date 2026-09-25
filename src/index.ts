@@ -6,6 +6,7 @@ import { errorHandler } from "./middlewares/error-handler";
 import { authRoute } from "./modules/auth/auth.route";
 import { clientRoute } from "./modules/clients/client.route";
 import { projectRoute } from "./modules/projects/project.route";
+import { taskRoute } from "./modules/tasks/task.route";
 import { userRoute } from "./modules/users/user.route";
 import type { AppEnv } from "./types/app";
 
@@ -26,6 +27,7 @@ app.route("/auth", authRoute);
 app.route("/users", userRoute);
 app.route("/clients", clientRoute);
 app.route("/projects", projectRoute);
+app.route("/tasks", taskRoute);
 
 app.notFound((c) =>
 	c.json(
