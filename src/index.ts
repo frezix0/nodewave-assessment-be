@@ -3,15 +3,21 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { env } from "./config/env";
 import { errorHandler } from "./middlewares/error-handler";
+import {
+	attachmentRoute,
+	taskAttachmentRoute,
+} from "./modules/attachment/attachment.route";
 import { auditRoute, taskAuditRoute } from "./modules/audit/audit.route";
 import { authRoute } from "./modules/auth/auth.route";
 import { clientRoute } from "./modules/clients/client.route";
+import {
+	commentRoute,
+	taskCommentRoute,
+} from "./modules/comment/comment.route";
 import { dependencyRoute } from "./modules/dependency/dependency.route";
 import { projectRoute } from "./modules/projects/project.route";
 import { taskRoute } from "./modules/tasks/task.route";
 import { userRoute } from "./modules/users/user.route";
-import { attachmentRoute, taskAttachmentRoute } from "./modules/attachment/attachment.route";
-import { commentRoute, taskCommentRoute } from "./modules/comment/comment.route";
 import type { AppEnv } from "./types/app";
 
 const app = new Hono<AppEnv>();
