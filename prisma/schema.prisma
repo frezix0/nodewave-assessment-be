@@ -40,6 +40,8 @@ model User {
   department   Department?
   clientId     String?
   client       Client?     @relation(fields: [clientId], references: [id])
+  attachments  Attachment[]
+  comments     Comment[]
   tokenVersion Int         @default(0)
   assignedTasks Task[]     @relation("TaskAssignee")
   createdTasks  Task[]     @relation("TaskCreator")
@@ -98,6 +100,8 @@ model Task {
   assigneeId    String?
   prerequisites TaskDependency[] @relation("TaskPrerequisites")
   dependents    TaskDependency[] @relation("TaskDependents")
+  attachments   Attachment[]
+  comments      Comment[]
   auditLogs     AuditLog[]
   assignee      User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
   createdById   String
@@ -145,4 +149,40 @@ model AuditLog {
 
   @@index([taskId, timestamp])
   @@index([projectId, timestamp])
+}
+
+model Attachment {
+  id           String          @id @default(uuid())
+  taskId       String
+  task         Task            @relation(fields: [taskId], references: [id])
+  uploadedById String
+  uploadedBy   User            @relation(fields: [uploadedById], references: [id])
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  blob         AttachmentBlob?
+  createdAt    DateTime        @default(now())
+  deletedAt    DateTime?
+
+  @@index([taskId])
+}
+
+model AttachmentBlob {
+  attachmentId String     @id
+  attachment   Attachment @relation(fields: [attachmentId], references: [id])
+  data         Bytes
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  taskId    String
+  task      Task      @relation(fields: [taskId], references: [id])
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([taskId, createdAt])
 }
