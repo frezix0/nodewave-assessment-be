@@ -263,7 +263,7 @@ export async function changeTaskStatus(
 			user,
 		);
 
-		await recomputeBlocked(tx, await dependentIdsOf(tx, id), user);
+		await recomputeBlocked(tx, [id, ...(await dependentIdsOf(tx, id))], user);
 
 		return tx.task.findFirstOrThrow({
 			where: { id },
