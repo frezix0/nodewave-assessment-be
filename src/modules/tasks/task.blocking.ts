@@ -76,7 +76,12 @@ export async function recomputeBlocked(
 		// audit log
 		await writeAudit(
 			db,
-			{ taskId: task.id, projectId: task.projectId, userId: actor.id, source: "SYSTEM" },
+			{
+				taskId: task.id,
+				projectId: task.projectId,
+				userId: actor.id,
+				source: "SYSTEM",
+			},
 			[
 				{
 					changedColumn: "status",
