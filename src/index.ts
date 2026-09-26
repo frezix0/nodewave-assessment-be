@@ -10,6 +10,8 @@ import { dependencyRoute } from "./modules/dependency/dependency.route";
 import { projectRoute } from "./modules/projects/project.route";
 import { taskRoute } from "./modules/tasks/task.route";
 import { userRoute } from "./modules/users/user.route";
+import { attachmentRoute, taskAttachmentRoute } from "./modules/attachment/attachment.route";
+import { commentRoute, taskCommentRoute } from "./modules/comment/comment.route";
 import type { AppEnv } from "./types/app";
 
 const app = new Hono<AppEnv>();
@@ -21,6 +23,7 @@ app.use(
 		origin: env.CORS_ORIGINS,
 		allowHeaders: ["Content-Type", "Authorization"],
 		allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+		exposeHeaders: ["Content-Disposition"],
 	}),
 );
 
@@ -32,6 +35,10 @@ app.route("/projects", projectRoute);
 app.route("/tasks", taskRoute);
 app.route("/tasks", dependencyRoute);
 app.route("/tasks", taskAuditRoute);
+app.route("/tasks", taskAttachmentRoute);
+app.route("/tasks", taskCommentRoute);
+app.route("/attachments", attachmentRoute);
+app.route("/comments", commentRoute);
 app.route("/audit-logs", auditRoute);
 
 app.notFound((c) =>
