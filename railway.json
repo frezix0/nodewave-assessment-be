@@ -5,7 +5,7 @@
 	},
 	"deploy": {
 		"startCommand": "bun run start",
-        "preDeployCommand": ["bunx prisma migrate deploy && bun prisma/seed.ts"],
+		"preDeployCommand": ["bunx prisma migrate deploy && bun prisma/seed.ts"],
 		"healthcheckPath": "/health",
 		"restartPolicyType": "ON_FAILURE"
 	}
